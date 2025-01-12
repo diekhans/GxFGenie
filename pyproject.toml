@@ -1,0 +1,18 @@
+[tool.poetry]
+name = "gxfgenie"
+version = "0.1.0"
+description = "Reading and writing of GTF or GFF3 genome annotation files"
+authors = ["Mark Diekhans <markd@ucsc.edu>"]
+license = "BSD 3-Clause"
+readme = "README.md"
+
+[tool.poetry.dependencies]
+python = "^3.12"
+
+
+[tool.poetry.group.dev.dependencies]
+pytest = "^8.3.4"
+
+[build-system]
+requires = ["poetry-core"]
+build-backend = "poetry.core.masonry.api"

@@ -1,0 +1,5 @@
+* test cases sources
+** https://github.com/chapmanb/bcbb/tree/master/gff/Tests/GFF
+
+* gtf_parser.py
+split_attr_col_re - will not work if attr has quoted space or ;
