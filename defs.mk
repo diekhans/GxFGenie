@@ -2,8 +2,9 @@
 #   root=../..
 #   include ${root}/defs.mk
 
-PYTHON = python3
-FLAKE8 = python3 -m flake8
+PYTHON = poetry run python3
+FLAKE8 = ${PYTHON} -m flake8
+PYTEST = ${PYTHON} -m pytest
 
 export PYTHONPATH:=${root}/lib:${PYTHONPATH}
 ifeq (${PYTHONWARNINGS},)

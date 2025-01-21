@@ -8,6 +8,9 @@ readme = "README.md"
 
 [tool.poetry.dependencies]
 python = "^3.12"
+pytest-xdist = "^3.6.1"
+flake8 = "^7.1.1"
+pipettor = "^1.0.0"
 
 
 [tool.poetry.group.dev.dependencies]

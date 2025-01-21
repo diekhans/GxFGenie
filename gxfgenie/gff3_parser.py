@@ -5,7 +5,7 @@ GFF3 parser
 
 import re
 from gxfgenie.errors import GxfGenieParseError
-from gxfgenie.gxf_rec import GxfAttrs
+from gxfgenie.gxf_rec import GxfAttrs, GxfRecord
 from gxfgenie.gxf_parser import GxfParser
 
 # split attributes field
@@ -18,8 +18,15 @@ _split_attr_re = re.compile(r"^([a-zA-Z_]+)=(.+)$")
 _split_multi_var_re = re.compile(",")
 
 
+class Gff3Record(GxfRecord):
+    "A GFF3 record"
+
+    def __str__(self):
+        pass
+
 class Gff3Parser(GxfParser):
     """
+    Parse a GTF file
     """
 
     def _split_multi_val_attr(self, val_str):
@@ -39,7 +46,7 @@ class Gff3Parser(GxfParser):
             val = self._split_multi_val_attr(val)
         setattr(attrs, attr, val)
 
-    def parse_attrs(self, attrs_str):
+    def _parse_attrs(self, attrs_str):
         """
         Parse the attributes and values.
         """
@@ -48,3 +55,11 @@ class Gff3Parser(GxfParser):
             if len(attr_str) > 0:
                 self.__parse_attr_val(attr_str, attrs)
         return attrs
+
+    def parse_rec(self, row):
+        """parse on record line of the GTF"""
+        return Gff3Record(row[0], row[1], row[2],
+                          int(row[3]), int(row[4]),
+                          row[5], row[6], row[7],
+                          self._parse_attrs(row[8]),
+                          line_number=self.line_number)

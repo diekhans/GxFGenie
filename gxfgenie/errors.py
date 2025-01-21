@@ -3,8 +3,8 @@ Exception classes
 """
 # Copyright 2006-2022 Mark Diekhans
 
-def GxfGenieError(Exception):
-    "Errors GxfGenie errors"
+class GxfGenieError(Exception):
+    "GxfGenie base error class"
     pass
 
 

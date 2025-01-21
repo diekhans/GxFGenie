@@ -2,6 +2,7 @@
 GxfRecord parsed from either GTF or GFF3 file.
 """
 # Copyright 2025-2025 Mark Diekhans
+from abc import ABC, abstractmethod
 
 class GxfAttrs:
     """
@@ -11,14 +12,15 @@ class GxfAttrs:
     """
     pass
 
-class GxfRecord:
+class GxfRecord(ABC):
     """
-    One record of a GTF or GFF3 file.
+    One record of a GTF or GFF3 file. Extended to get an implementation of __str__
+    that returns a record in the correct format.
     """
     __slots__ = ("seqname", "source", "feature", "start", "end", "score",
-                 "strand", "phase", "attributes", "line_number")
+                 "strand", "phase", "attrs", "line_number")
 
-    def __init__(self, seqname, source, feature, start, end, score, strand, phase, gxf_attrs, *, line_number=None):
+    def __init__(self, seqname, source, feature, start, end, score, strand, phase, attrs, *, line_number=None):
         self.seqname = seqname
         self.source = source
         self.feature = feature
@@ -27,8 +29,13 @@ class GxfRecord:
         self.score = score
         self.strand = strand
         self.phase = phase
-        self.attrs = gxf_attrs
+        self.attrs = attrs
         self.line_number = line_number
+
+    @abstractmethod
+    def __str__(self):
+        """format-specific record conversion"""
+        pass
 
 
 class GxfMeta:
