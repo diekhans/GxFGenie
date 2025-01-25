@@ -19,8 +19,7 @@ class GtfRecord(GxfRecord):
     "A GTF record"
 
     def __str__(self):
-        pass
-
+        return gtf_format_rec(self)
 
 class GtfParser(GxfParser):
     """
@@ -53,3 +52,32 @@ class GtfParser(GxfParser):
                          row[5], row[6], row[7],
                          self._parse_attrs(row[8]),
                          line_number=self.line_number)
+
+def _format_attr_val(name, value):
+    # quote if not a number and add ;
+    if value.isdigit():
+        return  f'{name} {value};'
+    else:
+        return f'{name} "{value}";'
+
+def gtf_format_attrs(attrs):
+    """
+    Format a GxfAttrs object into a valid GTF attributes string.
+    """
+    attrs_strs = []
+    for name in vars(attrs):
+        if not name.startswith('_'):
+            attrs_strs.append(_format_attr_val(name, getattr(attrs, name)))
+    return " ".join(attrs_strs)
+
+def gtf_format_rec(rec):
+    """format a GTF record"""
+    return '\t'.join([rec.seqname,
+                      rec.source,
+                      rec.feature,
+                      str(rec.start),
+                      str(rec.end),
+                      str(rec.score),
+                      rec.strand,
+                      rec.phase,
+                      gtf_format_attrs(rec.attrs)])

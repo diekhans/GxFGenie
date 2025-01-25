@@ -27,10 +27,10 @@ def get_test_output_dir(request):
     os.makedirs(outdir, exist_ok=True)
     return outdir
 
-def get_test_output_file(request, ext="", *, subdir=None):
+def get_test_output_file(request, ext=""):
     """Get path to the output file, using the current test id and append ext,
     which should contain a dot."""
-    return osp.join(get_test_output_dir(request, subdir), get_test_id(request) + ext)
+    return osp.join(get_test_output_dir(request), get_test_id(request) + ext)
 
 def get_test_expect_file(request, ext="", *, basename=None):
     """Get path to the expected file, using the current test id and append
