@@ -9,6 +9,7 @@ import sys
 import os
 import os.path as osp
 import difflib
+import subprocess
 
 def get_test_id(request):
     return osp.basename(request.node.nodeid)
@@ -72,3 +73,45 @@ class UncheckedType:
 
 
 NOCHECK = UncheckedType()
+
+
+def _check_form_gff_read():
+    "does gffread program exist"
+    try:
+        stat = subprocess.run(['gffread', '--version'], stdout=subprocess.DEVNULL)
+        found = (stat.returncode == 0)
+    except FileNotFoundError:
+        found = False
+    if not found:
+        print("Warning: gffread program not found, some test validations skipped", file=sys.stderr)
+    return found
+
+
+# cache of result
+_have_gffread_program = None
+
+def _have_gffread():
+    "check if gffread program exist"
+    global _have_gffread_program
+    if _have_gffread_program is None:
+        _have_gffread_program = _check_form_gff_read()
+    return _have_gffread_program
+
+def _bed_to_gxf(request, gxf, is_gtf, typedir):
+    outdir = get_test_output_dir(request)
+    subdir = "gtf_bed" if is_gtf else "gff_bed"
+    bed = osp.join(outdir, subdir, typedir, get_test_id(request) + ".bed")
+    os.makedirs(osp.dirname(bed), exist_ok=True)
+    subprocess.check_call(["gffread", "--bed", gxf, "-o", bed])
+    return bed
+
+def _gxf_to_bed_compare(request, in_gxf, out_gxf, *, is_gtf=False):
+    expect_bed = _bed_to_gxf(request, in_gxf, is_gtf, 'expect')
+    got_bed = _bed_to_gxf(request, out_gxf, is_gtf, 'got')
+    diff_test_files(expect_bed, got_bed)
+
+def gtf_to_bed_compare(request, in_gtf, out_gtf):
+    """compare GTF output with source by converting to bed, if gffread is
+    available"""
+    if _have_gffread():
+        _gxf_to_bed_compare(request, in_gtf, out_gtf, is_gtf=True)

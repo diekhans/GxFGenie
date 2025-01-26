@@ -5,7 +5,7 @@ GFF3 parser
 
 import re
 from gxfgenie.errors import GxfGenieParseError
-from gxfgenie.gxf_rec import GxfAttrs, GxfRecord
+from gxfgenie.gxf_record import GxfAttrs, GxfRecord
 from gxfgenie.gxf_parser import GxfParser
 
 # split attributes field

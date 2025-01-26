@@ -5,11 +5,10 @@ Shared code for GFF3 and GTF parsing.
 import re
 from abc import ABC, abstractmethod
 from gxfgenie.errors import GxfGenieParseError
-from gxfgenie.gxf_rec import GxfMeta
+from gxfgenie.gxf_record import GxfMeta
 from gxfgenie import fileops
 
 _ignored_line_re = re.compile(r"(^[ ]*$)|(^[ ]*#.*$)")  # spaces or comment line
-
 
 class GxfParser(ABC):
     """
@@ -24,19 +23,20 @@ class GxfParser(ABC):
         self.gxf_file = gxf_file if gxf_file is not None else "<unknown>"
         self.opened_file = (gxf_fh is None)
         self.fh = fileops.opengz(gxf_file) if gxf_fh is None else gxf_fh
-        self.current_line = None
         self.line_number = 0
+        self.attrs_cached = {}
 
     def _advance_line(self):
         """Advance to the next line. Sets object state and returns None or line"""
-        self.current_line = self.fh.readline()
-        if len(self.current_line) == 0:
+        line = self.fh.readline()
+        if len(line) == 0:
             return None
         else:
             self.line_number += 1
-            return self.current_line.rstrip("\n")
+            return line.rstrip("\n")
 
     def close(self):
+        """close GxF file if it was opened by __init__"""
         if (self.fh is not None) and self.opened_file:
             self.fh.close()
         self.fh = None
@@ -78,19 +78,12 @@ class GxfParser(ABC):
         else:
             return self._parse_line(line)
 
-    def _next_rec(self):
-        line = self._advance_line()
-        if line is not None:
-            return self._process_line(line)
-        return None
-
-    def __iter__(self):
-        return self
-
-    def __next__(self):
-        rec = self._next_rec()
-        if rec is None:
+    def parse(self):
+        "parse generator of records or metadata"
+        try:
+            while (line := self._advance_line()) is not None:
+                rec = self._process_line(line)
+                if rec is not None:
+                    yield rec
+        finally:
             self.close()
-            raise StopIteration
-        else:
-            return rec

@@ -4,7 +4,7 @@ GTF parser
 # Copyright 2025-2025 Mark Diekhans
 import re
 from gxfgenie.errors import GxfGenieParseError
-from gxfgenie.gxf_rec import GxfAttrs, GxfRecord
+from gxfgenie.gxf_record import GxfAttrs, GxfRecord, gxf_attr_add
 from gxfgenie.gxf_parser import GxfParser
 
 # split attributes field
@@ -25,15 +25,14 @@ class GtfParser(GxfParser):
     """
     Parse a GTF file.
     """
-
     def _parse_attr_val(self, attr_str, attrs):
         match = _split_attr_re.match(attr_str)
         if match is None:
             raise GxfGenieParseError(self.gxf_file, self.line_number,
                                      f"Can't parse attribute/value: `{attr_str}'")
-        attr = match.group(1)
-        val = match.group(5) if match.group(5) is not None else match.group(4)
-        setattr(attrs, attr, val)
+        name = match.group(1)
+        value = match.group(5) if match.group(5) is not None else match.group(4)
+        gxf_attr_add(attrs, self.attrs_cached, name, value)
 
     def _parse_attrs(self, attrs_str):
         """
@@ -53,21 +52,21 @@ class GtfParser(GxfParser):
                          self._parse_attrs(row[8]),
                          line_number=self.line_number)
 
-def _format_attr_val(name, value):
+def _format_attr(attr, value):
     # quote if not a number and add ;
     if value.isdigit():
-        return  f'{name} {value};'
+        return f'{attr.name} {value};'
     else:
-        return f'{name} "{value}";'
+        return f'{attr.name} "{value}";'
 
 def gtf_format_attrs(attrs):
     """
     Format a GxfAttrs object into a valid GTF attributes string.
     """
     attrs_strs = []
-    for name in vars(attrs):
-        if not name.startswith('_'):
-            attrs_strs.append(_format_attr_val(name, getattr(attrs, name)))
+    for attr in attrs.values():
+        for ival in range(0, len(attr)):
+            attrs_strs.append(_format_attr(attr, attr[ival]))
     return " ".join(attrs_strs)
 
 def gtf_format_rec(rec):

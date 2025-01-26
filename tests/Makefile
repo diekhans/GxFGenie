@@ -19,6 +19,9 @@ pytest_extra =
 # to get less verbose traceback
 traceback = --tb=native
 
+# used to find source of ResourceWarning
+# export PYTHONTRACEMALLOC = 20
+
 test:
 	${PYTEST} ${traceback} -n ${nproc} ${pytest_extra} ${tests}
 
