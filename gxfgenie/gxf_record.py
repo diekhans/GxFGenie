@@ -2,7 +2,7 @@
 GxfRecord parsed from either GTF or GFF3 file.
 """
 # Copyright 2025-2025 Mark Diekhans
-from abc import ABC, abstractmethod
+from abc import ABC
 from collections.abc import Iterable, Hashable
 from gxfgenie.objdict import ObjDict
 
@@ -17,6 +17,10 @@ def _normalize_value(value):
     if (not isinstance(value, (bytes, str, tuple))) and isinstance(value, Iterable):
         value = tuple(value)
     return value
+
+def _str_or_dot(value):
+    "return a period if value is None, otherwise str(value)"
+    return '.' if value is None else str(value)
 
 class GxfAttr:
     """An attribute in GxF can have one or more values. The major use case are
@@ -93,6 +97,7 @@ class GxfAttrs(ObjDict):
             raise TypeError(f"attribute `{name}' must have a value of type `GxfAttr', got `{type(value)}'")
         super().__setitem__(name, value)
 
+
 def _merge_attr_values(old_value, new_value):
     new_value = _normalize_value(new_value)
     if not isinstance(old_value, tuple):
@@ -134,6 +139,17 @@ class GxfRecord(ABC):
     """
     One record of a GTF or GFF3 file. Extended to get an implementation of __str__
     that returns a record in the correct format.
+
+    Attributes:
+        seqname (str): sequence name
+        source (str): source of annotation
+        feature (str): feature name
+        start (int): start of feature in sequence (one-based, closed)
+        end (int):: end of feature in sequence (one-based, closed)
+        score (float,None): score if present
+        strand (str): strand of feature, one of '+', '-', or None if not specfied.
+        phase (int,None): phase of CDS exon, 0, 1, 2, or None
+        attrs (GxfAttrs): Attributes
     """
     __slots__ = ("seqname", "source", "feature", "start", "end", "score",
                  "strand", "phase", "attrs", "line_number")
@@ -151,10 +167,17 @@ class GxfRecord(ABC):
         self.attrs = attrs
         self.line_number = line_number
 
-    @abstractmethod
     def __str__(self):
-        """format-specific record formatting as a line"""
-        pass
+        """convert to tab-separate line"""
+        return '\t'.join([self.seqname,
+                          self.source,
+                          self.feature,
+                          str(self.start),
+                          str(self.end),
+                          _str_or_dot(self.score),
+                          _str_or_dot(self.strand),
+                          _str_or_dot(self.phase),
+                          str(self.attrs)])
 
 class GxfMeta:
     """

@@ -8,8 +8,15 @@ import pytest
 import sys
 import os
 import os.path as osp
+import re
 import difflib
 import subprocess
+
+def safe_test_id(in_id):
+    """clean up a test id so it can be used as a file name on output
+    by changing `/' to `_'"""
+    return in_id.replace('/', '_')
+
 
 def get_test_id(request):
     return osp.basename(request.node.nodeid)
@@ -62,18 +69,61 @@ def diff_results_expected(request, ext="", *, basename=None):
     diff_test_files(get_test_expect_file(request, ext, basename=basename),
                     get_test_output_file(request, ext))
 
+def _mk_err_spec(re_part, const_part):
+    """Generate an exception matching regexp with a re part and an escaped static part
+    This is manually used to generate error_sets.  Uses while developing tests."""
+    pass
 
-class UncheckedType:
-    "singleton to flag expected field to not check"
-    def __repr__(self):
-        return "<NOCHECK>"
+def _print_err_spec(setname, expect_spec, got_chain):
+    """print out to use to manually edit test expected data"""
+    print('@>', setname, file=sys.stderr)
+    for got in got_chain:
+        print(f"  {got[0].__name__}", repr(got[1]), file=sys.stderr)
 
-    def __str__(self):
-        return "<NOCHECK>"
+class CheckRaisesCauses:
+    """
+    Validate exception chain against  [(exception, regex), ...].
+    """
+    def __init__(self, setname, expect_spec):
+        self.setname = setname
+        self.expect_spec = expect_spec
 
+    def __enter__(self):
+        return self
 
-NOCHECK = UncheckedType()
+    @staticmethod
+    def _build_got_chain(exc):
+        "convert exception chain to a list to match"
+        got = []
+        while exc is not None:
+            got.append((type(exc), str(exc)))
+            exc = getattr(exc, "__cause__", None)
+        return got
 
+    @staticmethod
+    def _check_except(got, expect):
+        if got[0] != expect[0]:
+            raise AssertionError(f"Expected exception of type `{expect[0].__name__}', got '{got[0].__name__}'")
+        if not re.search(expect[1], got[1]):
+            raise AssertionError(f"Expected message matching `{expect[1]}', got `{got[1]}'")
+
+    def __exit__(self, exc_type, exc_value, traceback):
+        """
+        Checks the raised exception and its causes against the provided list.
+        """
+        if exc_type is None:
+            raise AssertionError("No exception was raised")
+        got_chain = self._build_got_chain(exc_value)
+        _print_err_spec(self.setname, self.expect_spec, got_chain)
+
+        # check values before checking length to be easier to debug
+        for got, expect in zip(got_chain, self.expect_spec[1]):
+            self._check_except(got, expect)
+
+        if len(self.expect_chain) != len(got_chain):
+            raise AssertionError(f"Expect exception cause chain of {len(self.expect_chain)}, got {len(got_chain)}: {got_chain}")
+
+        return True
 
 def _check_form_gff_read():
     "does gffread program exist"

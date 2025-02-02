@@ -46,7 +46,7 @@ class Gff3Parser(GxfParser):
             val = self._split_multi_val_attr(val)
         setattr(attrs, attr, val)
 
-    def _parse_attrs(self, attrs_str):
+    def parse_attrs(self, attrs_str):
         """
         Parse the attributes and values.
         """
@@ -56,10 +56,6 @@ class Gff3Parser(GxfParser):
                 self.__parse_attr_val(attr_str, attrs)
         return attrs
 
-    def parse_rec(self, row):
-        """parse on record line of the GTF"""
-        return Gff3Record(row[0], row[1], row[2],
-                          int(row[3]), int(row[4]),
-                          row[5], row[6], row[7],
-                          self._parse_attrs(row[8]),
-                          line_number=self.line_number)
+    def create_record(self, seqname, source, feature, start, end, score, strand, phase, attrs, *, line_number=None):
+        "create a Gff3Record object"
+        return Gff3Record(seqname, source, feature, start, end, score, strand, phase, attrs, line_number=line_number)

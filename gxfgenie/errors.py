@@ -7,8 +7,13 @@ class GxfGenieError(Exception):
     "GxfGenie base error class"
     pass
 
+class GxfGenieFormatError(GxfGenieError):
+    """indicates a format error cause without location information to not
+    repeat information added by the top level GxfGenieParseError"""
+    pass
 
-class GxfGenieParseError(GxfGenieError):
+class GxfGenieParseError(GxfGenieFormatError):
+
     """
     Indicates a parser error that is reported but allows checking to continue.
     """

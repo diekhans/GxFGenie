@@ -4,7 +4,7 @@ Shared code for GFF3 and GTF parsing.
 # Copyright 2025-2025 Mark Diekhans
 import re
 from abc import ABC, abstractmethod
-from gxfgenie.errors import GxfGenieParseError
+from gxfgenie.errors import GxfGenieFormatError, GxfGenieParseError
 from gxfgenie.gxf_record import GxfMeta
 from gxfgenie import fileops
 
@@ -14,7 +14,8 @@ class GxfParser(ABC):
     """
     Common code shared between GTF and GFF3 parser.  This just does basic
     parsing, most validation must be done once file is parsed. Derived class
-    implements parse_attrs() to handle different attribute formats.
+    implements parse_attrs() to handle different attribute formats and
+    create_record() to create a record derived from GxfRecord.
 
     This object is used as an iterator to parse a file.
     """
@@ -53,18 +54,71 @@ class GxfParser(ABC):
             return None
 
     @abstractmethod
-    def parse_rec(self, row):
-        """parse on record line of the GxF"""
+    def parse_attrs(self, attrs_str):
+        "parse attributes of the derived type"
         pass
+
+    @abstractmethod
+    def create_record(self, seqname, source, feature, start, end, score, strand, phase, attrs, *, line_number=None):
+        "create a record of the derived type"
+        pass
+
+    def _parse_pos_column(self, col_name, value):
+        "parse start or end"
+        pos = None
+        try:
+            pos = int(value)
+        except ValueError:
+            pass
+        if (pos is None) or (pos <= 0):
+            raise GxfGenieFormatError(f"Invalid `{col_name}', expected a positive integer, got `{value}'")
+        return pos
+
+    def _parse_score(self, value):
+        if value == '.':
+            return None
+        try:
+            return float(value)
+        except ValueError:
+            raise GxfGenieFormatError(f"Invalid `score', expected a floating point number or `.', got `{value}'")
+
+    def _parse_strand(self, value):
+        if value == '.':
+            return None
+        if value not in ('+', '-'):
+            raise GxfGenieFormatError(f"Invalid `strand', expected `+', `-', or `.', got `{value}'")
+        return value
+
+    def _parse_phase(self, value):
+        if value == '.':
+            return None
+        phase = None
+        try:
+            phase = int(value)
+        except ValueError:
+            pass
+        if (phase is None) or (phase < 0) or (phase > 2):
+            raise GxfGenieFormatError(f"Invalid `phase', expected `0', `1', `2', or `.', got `{value}'")
+        return phase
+
+    def _parse_record(self, row):
+        """parse on record line of the GTF"""
+        return self.create_record(row[0], row[1], row[2],
+                                  self._parse_pos_column('start', row[3]),
+                                  self._parse_pos_column('end', row[4]),
+                                  self._parse_score(row[5]),
+                                  self._parse_strand(row[6]),
+                                  self._parse_phase(row[7]),
+                                  self.parse_attrs(row[8]),
+                                  line_number=self.line_number)
 
     def _parse_line(self, line):
         gxf_num_cols = 9
         row = line.split("\t")
-        if len(row) != gxf_num_cols:
-            raise GxfGenieParseError(self.gxf_file, self.line_number,
-                                     f"Wrong number of columns, expected {gxf_num_cols}, got {len(row)}: `{line}'")
         try:
-            return self.parse_rec(row)  # derived type returned
+            if len(row) != gxf_num_cols:
+                raise GxfGenieFormatError(f"Wrong number of columns, expected {gxf_num_cols}, got {len(row)}: `{line}'")
+            return self._parse_record(row)
         except Exception as ex:
             raise GxfGenieParseError(self.gxf_file, self.line_number,
                                      f"error parsing GxF record: `{line}'") from ex
