@@ -6,8 +6,9 @@ include ${root}/defs.mk
 #   make libtests tests=test_analyze.py::test_analysis_fred
 tests = .
 
-# override number of process with nproc=1, etc
-# stdout not echo with mulitple processed
+# override number of process with nproc=0 to run
+# in main process.
+# stdout not echo with mulitple processes
 nproc = 20
 
 # debug=--debug
@@ -23,7 +24,7 @@ traceback = --tb=native
 # export PYTHONTRACEMALLOC = 20
 
 test:
-	${PYTEST} ${traceback} -n ${nproc} ${pytest_extra} ${tests}
+	${PYTEST} ${traceback} --numprocesses=${nproc} ${pytest_extra} ${tests}
 
 mkdirs:
 	@mkdir -p output
