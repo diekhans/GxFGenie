@@ -171,4 +171,4 @@ cython_debug/
 .pypirc
 
 .emacs.bak/
-tests/outputt/
+tests/output/

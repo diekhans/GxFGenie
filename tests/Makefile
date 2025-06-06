@@ -8,7 +8,7 @@ tests = .
 
 # override number of process with nproc=1, etc
 # stdout not echo with mulitple processed
-nproc = auto
+nproc = 20
 
 # debug=--debug
 debug = 
