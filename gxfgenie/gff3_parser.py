@@ -4,12 +4,13 @@ GFF3 parser
 # Copyright 2025-2025 Mark Diekhans
 
 import re
+import urllib
 from gxfgenie.errors import GxfGenieParseError
-from gxfgenie.gxf_record import GxfAttrs, GxfRecord
+from gxfgenie.gxf_record import GxfAttrs, GxfRecord, gxf_attr_add
 from gxfgenie.gxf_parser import GxfParser
 
 # split attributes field
-split_attr_col_re = re.compile(r"; *")
+_split_attr_col_re = re.compile(r"; *")
 
 # Parses `attr=val`
 _split_attr_re = re.compile(r"^([a-zA-Z_]+)=(.+)$")
@@ -34,50 +35,47 @@ class Gff3Parser(GxfParser):
     """
 
     def _split_multi_val_attr(self, val_str):
-        vals = []
-        for val in _split_multi_var_re.split(val_str):
-            vals.append(val)
-        return tuple(vals)
+        return tuple([urllib.parse.unquote(value)
+                      for value in _split_multi_var_re.split(val_str)])
 
     def _parse_attr_val(self, attr_str, attrs):
-        match = self.split_attr_re.match(attr_str)
+        match = _split_attr_re.match(attr_str)
         if match is None:
             raise GxfGenieParseError(self.gxf_file, self.line_number,
                                      f"Can't parse attribute/value: `{attr_str}'")
-        attr = match.group(1)
-        val = match.group(2)
-        if ',' in val:
-            val = self._split_multi_val_attr(val)
-        setattr(attrs, attr, val)
+        name = match.group(1)
+        value = match.group(2)
+        if ',' in value:
+            value = self._split_multi_val_attr(value)
+        else:
+            value = urllib.parse.unquote(value)
+        gxf_attr_add(attrs, self.attrs_cached, name, value)
 
     def parse_attrs(self, attrs_str):
         """
         Parse the attributes and values.
         """
         attrs = Gff3Attrs()
-        for attr_str in self.split_attr_col_re.split(attrs_str):
+        for attr_str in _split_attr_col_re.split(attrs_str.strip()):
             if len(attr_str) > 0:
-                self.__parse_attr_val(attr_str, attrs)
+                self._parse_attr_val(attr_str, attrs)
         return attrs
 
     def create_record(self, seqname, source, feature, start, end, score, strand, phase, attrs, *, line_number=None):
         "create a Gff3Record object"
         return Gff3Record(seqname, source, feature, start, end, score, strand, phase, attrs, line_number=line_number)
 
-def _format_attr(attr, value):
-    # quote if not a number and add ;
-    # FIXME: need to URL encode
-    if value.isdigit():
-        return f'{attr.name} {value};'
-    else:
-        return f'{attr.name} "{value}";'
+def _format_attr(attr):
+    values = attr.value
+    if isinstance(values, str):
+        values = [values]
+    escaped = [urllib.parse.quote(v, safe='') for v in values]
+    return f"{attr.name}=" + ",".join(escaped)
 
 def gff3_format_attrs(attrs):
     """
     Format a GtfAttrs object into a valid GTF attributes string.
     """
-    # FIXME add url encoding
-    assert False, "not implemented"
     attrs_strs = []
     for attr in attrs.values():
         for ival in range(0, len(attr)):

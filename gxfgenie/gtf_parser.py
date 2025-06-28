@@ -42,7 +42,7 @@ class GtfParser(GxfParser):
         Parse the attributes and values.
         """
         attrs = GtfAttrs()
-        for attr_str in _split_attr_col_re.split(attrs_str):
+        for attr_str in _split_attr_col_re.split(attrs_str.strip()):
             if len(attr_str) > 0:
                 self._parse_attr_val(attr_str, attrs)
         return attrs
