@@ -47,9 +47,12 @@ def get_test_expect_file(request, ext="", *, basename=None):
     fname = basename if basename is not None else get_test_id(request)
     return osp.join("expected", fname + ext)
 
+def _normalize_floats(line, digits=2):
+    return re.sub(r'\d+\.\d+', lambda m: f"{float(m.group()):.{digits}f}", line)
+
 def _get_lines(fname):
     with open(fname) as fh:
-        return fh.readlines()
+        return [_normalize_floats(line) for line in fh]
 
 def diff_test_files(exp_file, out_file):
     """diff expected and output files."""
@@ -59,7 +62,7 @@ def diff_test_files(exp_file, out_file):
 
     diffs = list(difflib.unified_diff(exp_lines, out_lines, exp_file, out_file))
     for diff in diffs:
-        print(diff, end=' ', file=sys.stderr)
+        print(diff, end=' ', flush=True, file=sys.stderr)
 
     if len(diffs) > 0:
         pytest.fail(f"test output differed  expected: '{exp_file}', got: '${out_file}'")
@@ -76,9 +79,9 @@ def _mk_err_spec(re_part, const_part):
 
 def _print_err_spec(setname, expect_spec, got_chain):
     """print out to use to manually edit test expected data"""
-    print('@>', setname, file=sys.stderr)
+    print('@>', setname, flush=True, file=sys.stderr)
     for got in got_chain:
-        print(f"  {got[0].__name__}", repr(got[1]), file=sys.stderr)
+        print(f"  {got[0].__name__}", repr(got[1]), flush=True, file=sys.stderr)
 
 class CheckRaisesCauses:
     """
@@ -114,14 +117,18 @@ class CheckRaisesCauses:
         if exc_type is None:
             raise AssertionError("No exception was raised")
         got_chain = self._build_got_chain(exc_value)
-        _print_err_spec(self.setname, self.expect_spec, got_chain)
 
-        # check values before checking length to be easier to debug
-        for got, expect in zip(got_chain, self.expect_spec[1]):
-            self._check_except(got, expect)
+        try:
+            # check values before checking length to be easier to debug
+            for got, expect in zip(got_chain, self.expect_spec):
+                self._check_except(got, expect)
 
-        if len(self.expect_chain) != len(got_chain):
-            raise AssertionError(f"Expect exception cause chain of {len(self.expect_chain)}, got {len(got_chain)}: {got_chain}")
+            if len(self.expect_spec) != len(got_chain):
+                raise AssertionError(f"Expect exception cause chain of {len(self.expect_spec)}, got {len(got_chain)}: {got_chain}")
+        except Exception:
+            # this makes debugging easier
+            _print_err_spec(self.setname, self.expect_spec, got_chain)
+            raise
 
         return True
 
@@ -133,7 +140,7 @@ def _check_form_gff_read():
     except FileNotFoundError:
         found = False
     if not found:
-        print("Warning: gffread program not found, some test validations skipped", file=sys.stderr)
+        print("Warning: gffread program not found, some test validations skipped", flush=True, file=sys.stderr)
     return found
 
 

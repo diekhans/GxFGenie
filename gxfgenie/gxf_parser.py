@@ -21,6 +21,7 @@ class GxfParser(ABC):
     """
 
     def __init__(self, gxf_file=None, gxf_fh=None):
+        assert (gxf_file is not None) or (gxf_fh is not None)
         self.gxf_file = gxf_file if gxf_file is not None else "<unknown>"
         self.opened_file = (gxf_fh is None)
         self.fh = fileops.opengz(gxf_file) if gxf_fh is None else gxf_fh
@@ -63,7 +64,14 @@ class GxfParser(ABC):
         "create a record of the derived type"
         pass
 
-    def _parse_pos_column(self, col_name, value):
+    @staticmethod
+    def _parse_str_column(col_name, value):
+        if (len(value) == 0) or re.search(r'\s', value):
+            raise GxfGenieFormatError(f"Invalid `{col_name}', value may not be empty or contain whitespace, got `{value}'")
+        return value
+
+    @staticmethod
+    def _parse_pos_column(col_name, value):
         "parse start or end"
         pos = None
         try:
@@ -74,22 +82,28 @@ class GxfParser(ABC):
             raise GxfGenieFormatError(f"Invalid `{col_name}', expected a positive integer, got `{value}'")
         return pos
 
-    def _parse_score(self, value):
+    @staticmethod
+    def _parse_score(value):
         if value == '.':
             return None
         try:
-            return float(value)
+            if value.find('.') >= 0:
+                return float(value)
+            else:
+                return int(value)
         except ValueError:
-            raise GxfGenieFormatError(f"Invalid `score', expected a floating point number or `.', got `{value}'")
+            raise GxfGenieFormatError(f"Invalid `score', expected a floating point or integer number, or `.', got `{value}'")
 
-    def _parse_strand(self, value):
+    @staticmethod
+    def _parse_strand(value):
         if value == '.':
             return None
         if value not in ('+', '-'):
             raise GxfGenieFormatError(f"Invalid `strand', expected `+', `-', or `.', got `{value}'")
         return value
 
-    def _parse_phase(self, value):
+    @staticmethod
+    def _parse_phase(value):
         if value == '.':
             return None
         phase = None
@@ -103,9 +117,15 @@ class GxfParser(ABC):
 
     def _parse_record(self, row):
         """parse on record line of the GTF"""
-        return self.create_record(row[0], row[1], row[2],
-                                  self._parse_pos_column('start', row[3]),
-                                  self._parse_pos_column('end', row[4]),
+        start = self._parse_pos_column('start', row[3])
+        end = self._parse_pos_column('end', row[4])
+        if start > end:
+            raise GxfGenieFormatError(f"'start' column must be less-than or equal to end, got `{start} > {end}'")
+
+        return self.create_record(self._parse_str_column('seqname', row[0]),
+                                  self._parse_str_column('source', row[1]),
+                                  self._parse_str_column('feature', row[2]),
+                                  start, end,
                                   self._parse_score(row[5]),
                                   self._parse_strand(row[6]),
                                   self._parse_phase(row[7]),

@@ -15,11 +15,15 @@ _split_attr_col_re = re.compile(r"; *")
 _split_attr_re = re.compile(r"^([a-zA-Z_]+) +((\"(.+)\")|([0-9]+))$")
 
 
-class GtfRecord(GxfRecord):
-    "A GTF record"
+class GtfAttrs(GxfAttrs):
+    """GTF attributes of a record"""
 
     def __str__(self):
-        return gtf_format_rec(self)
+        return gtf_format_attrs(self)
+
+class GtfRecord(GxfRecord):
+    "A GTF record"
+    pass
 
 class GtfParser(GxfParser):
     """
@@ -37,7 +41,7 @@ class GtfParser(GxfParser):
         """
         Parse the attributes and values.
         """
-        attrs = GxfAttrs()
+        attrs = GtfAttrs()
         for attr_str in _split_attr_col_re.split(attrs_str):
             if len(attr_str) > 0:
                 self._parse_attr_val(attr_str, attrs)
@@ -57,22 +61,10 @@ def _format_attr(attr, value):
 
 def gtf_format_attrs(attrs):
     """
-    Format a GxfAttrs object into a valid GTF attributes string.
+    Format a GtfAttrs object into a valid GTF attributes string.
     """
     attrs_strs = []
     for attr in attrs.values():
         for ival in range(0, len(attr)):
             attrs_strs.append(_format_attr(attr, attr[ival]))
     return " ".join(attrs_strs)
-
-def gtf_format_rec(rec):
-    """format a GTF record"""
-    return '\t'.join([rec.seqname,
-                      rec.source,
-                      rec.feature,
-                      str(rec.start),
-                      str(rec.end),
-                      str(rec.score),
-                      rec.strand,
-                      rec.phase,
-                      gtf_format_attrs(rec.attrs)])

@@ -18,11 +18,15 @@ _split_attr_re = re.compile(r"^([a-zA-Z_]+)=(.+)$")
 _split_multi_var_re = re.compile(",")
 
 
-class Gff3Record(GxfRecord):
-    "A GFF3 record"
+class Gff3Attrs(GxfAttrs):
+    """ GFF3 attributes of a record"""
 
     def __str__(self):
-        pass
+        return gff3_format_attrs(self)
+
+class Gff3Record(GxfRecord):
+    "A GFF3 record"
+    pass
 
 class Gff3Parser(GxfParser):
     """
@@ -50,7 +54,7 @@ class Gff3Parser(GxfParser):
         """
         Parse the attributes and values.
         """
-        attrs = GxfAttrs()
+        attrs = Gff3Attrs()
         for attr_str in self.split_attr_col_re.split(attrs_str):
             if len(attr_str) > 0:
                 self.__parse_attr_val(attr_str, attrs)
@@ -59,3 +63,23 @@ class Gff3Parser(GxfParser):
     def create_record(self, seqname, source, feature, start, end, score, strand, phase, attrs, *, line_number=None):
         "create a Gff3Record object"
         return Gff3Record(seqname, source, feature, start, end, score, strand, phase, attrs, line_number=line_number)
+
+def _format_attr(attr, value):
+    # quote if not a number and add ;
+    # FIXME: need to URL encode
+    if value.isdigit():
+        return f'{attr.name} {value};'
+    else:
+        return f'{attr.name} "{value}";'
+
+def gff3_format_attrs(attrs):
+    """
+    Format a GtfAttrs object into a valid GTF attributes string.
+    """
+    # FIXME add url encoding
+    assert False, "not implemented"
+    attrs_strs = []
+    for attr in attrs.values():
+        for ival in range(0, len(attr)):
+            attrs_strs.append(_format_attr(attr, attr[ival]))
+    return " ".join(attrs_strs)

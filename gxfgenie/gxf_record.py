@@ -2,7 +2,7 @@
 GxfRecord parsed from either GTF or GFF3 file.
 """
 # Copyright 2025-2025 Mark Diekhans
-from abc import ABC
+from abc import ABC, abstractmethod
 from collections.abc import Iterable, Hashable
 from gxfgenie.objdict import ObjDict
 
@@ -79,7 +79,7 @@ class GxfAttr:
         else:
             return self.value
 
-class GxfAttrs(ObjDict):
+class GxfAttrs(ObjDict, ABC):
     """Attributes for GTF/GFF3 records.
 
     Mutable object of attribute in a GxF, containing GxfAttr objects.
@@ -97,6 +97,10 @@ class GxfAttrs(ObjDict):
             raise TypeError(f"attribute `{name}' must have a value of type `GxfAttr', got `{type(value)}'")
         super().__setitem__(name, value)
 
+    @abstractmethod
+    def __str(self):
+        """convert to file format"""
+        pass
 
 def _merge_attr_values(old_value, new_value):
     new_value = _normalize_value(new_value)
@@ -146,7 +150,7 @@ class GxfRecord(ABC):
         feature (str): feature name
         start (int): start of feature in sequence (one-based, closed)
         end (int):: end of feature in sequence (one-based, closed)
-        score (float,None): score if present
+        score (int,float,None): score if present
         strand (str): strand of feature, one of '+', '-', or None if not specfied.
         phase (int,None): phase of CDS exon, 0, 1, 2, or None
         attrs (GxfAttrs): Attributes
@@ -155,6 +159,7 @@ class GxfRecord(ABC):
                  "strand", "phase", "attrs", "line_number")
 
     def __init__(self, seqname, source, feature, start, end, score, strand, phase, attrs, *, line_number=None):
+        assert seqname is not None
         assert isinstance(attrs, GxfAttrs)
         self.seqname = seqname
         self.source = source
