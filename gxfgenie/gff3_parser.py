@@ -5,7 +5,7 @@ GFF3 parser
 
 import re
 from urllib.parse import quote, unquote
-from gxfgenie.errors import GxfGenieParseError, GxfGenieFormatError
+from gxfgenie.errors import GxfGenieFormatError
 from gxfgenie.gxf_record import GxfAttrs, GxfRecord, gxf_attr_add, str_or_dot
 from gxfgenie.gxf_parser import GxfParser
 
