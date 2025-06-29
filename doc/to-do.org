@@ -5,3 +5,7 @@
 split_attr_col_re - will not work if attr has quoted space or ;
 
 * have parse take one object as input and check for file like vs two args
+
+* add tests for compressed input and output
+
+* make parsers be generators, allowing for scanning

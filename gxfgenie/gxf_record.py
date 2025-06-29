@@ -18,7 +18,7 @@ def _normalize_value(value):
         value = tuple(value)
     return value
 
-def _str_or_dot(value):
+def str_or_dot(value):
     "return a period if value is None, otherwise str(value)"
     return '.' if value is None else str(value)
 
@@ -172,17 +172,10 @@ class GxfRecord(ABC):
         self.attrs = attrs
         self.line_number = line_number
 
+    @abstractmethod
     def __str__(self):
         """convert to tab-separate line"""
-        return '\t'.join([self.seqname,
-                          self.source,
-                          self.feature,
-                          str(self.start),
-                          str(self.end),
-                          _str_or_dot(self.score),
-                          _str_or_dot(self.strand),
-                          _str_or_dot(self.phase),
-                          str(self.attrs)])
+        pass
 
 class GxfMeta:
     """

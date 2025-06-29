@@ -65,9 +65,16 @@ class GxfParser(ABC):
         pass
 
     @staticmethod
-    def _parse_str_column(col_name, value):
+    def _parse_no_space_column(col_name, value):
         if (len(value) == 0) or re.search(r'\s', value):
             raise GxfGenieFormatError(f"Invalid `{col_name}', value may not be empty or contain whitespace, got `{value}'")
+        return value
+
+    @staticmethod
+    def _parse_no_empty_column(col_name, value):
+        # yes, refseq put spaces in features
+        if len(value.strip()) == 0:
+            raise GxfGenieFormatError(f"Invalid `{col_name}', value may not be empty, got `{value}'")
         return value
 
     @staticmethod
@@ -122,9 +129,9 @@ class GxfParser(ABC):
         if start > end:
             raise GxfGenieFormatError(f"'start' column must be less-than or equal to end, got `{start} > {end}'")
 
-        return self.create_record(self._parse_str_column('seqname', row[0]),
-                                  self._parse_str_column('source', row[1]),
-                                  self._parse_str_column('feature', row[2]),
+        return self.create_record(self._parse_no_space_column('seqname', row[0]),
+                                  self._parse_no_empty_column('source', row[1]),
+                                  self._parse_no_empty_column('feature', row[2]),
                                   start, end,
                                   self._parse_score(row[5]),
                                   self._parse_strand(row[6]),

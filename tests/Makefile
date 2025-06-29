@@ -17,8 +17,8 @@ debug =
 # override with pytest_extra=-v or what ever
 pytest_extra = 
 
-# to get less verbose traceback
-traceback = --tb=native
+# conftest.py generates a full native traceback for non-assert errors
+traceback = --tb=short
 
 # used to find source of ResourceWarning
 # export PYTHONTRACEMALLOC = 20

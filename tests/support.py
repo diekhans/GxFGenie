@@ -4,19 +4,19 @@ Various functions to support testing
 Copyright (c) 2024-2025, Mark Diekhans
 Copyright (c) 2024-2025, The Regents of the University of California
 """
-import pytest
 import sys
 import os
 import os.path as osp
 import re
+import shutil
 import difflib
 import subprocess
+import pytest
 
 def safe_test_id(in_id):
     """clean up a test id so it can be used as a file name on output
     by changing `/' to `_'"""
     return in_id.replace('/', '_')
-
 
 def get_test_id(request):
     return osp.basename(request.node.nodeid)
@@ -65,7 +65,7 @@ def diff_test_files(exp_file, out_file):
         print(diff, end=' ', flush=True, file=sys.stderr)
 
     if len(diffs) > 0:
-        pytest.fail(f"test output differed  expected: '{exp_file}', got: '${out_file}'")
+        pytest.fail(f"test output differed,  expected: '{exp_file}', got: '${out_file}'")
 
 def diff_results_expected(request, ext="", *, basename=None):
     """diff expected and output files, with names computed from test id."""
@@ -132,31 +132,25 @@ class CheckRaisesCauses:
 
         return True
 
-def _check_form_gff_read():
-    "does gffread program exist"
-    try:
-        stat = subprocess.run(['gffread', '--version'], stdout=subprocess.DEVNULL)
-        found = (stat.returncode == 0)
-    except FileNotFoundError:
-        found = False
-    if not found:
-        print("Warning: gffread program not found, some test validations skipped", flush=True, file=sys.stderr)
+
+# cache of program check results
+_exp_program_check_cache = {}
+
+def _have_ext_program(prog):
+    found = _exp_program_check_cache.get(prog)
+    if found is None:
+        found = shutil.which(prog) is not None
+        _exp_program_check_cache[prog] = found
+        if not found:
+            print(f"Note: {prog} program is not found, some extra test validations", flush=True, file=sys.stderr)
     return found
 
-
-# cache of result
-_have_gffread_program = None
-
 def _have_gffread():
-    "check if gffread program exist"
-    global _have_gffread_program
-    if _have_gffread_program is None:
-        _have_gffread_program = _check_form_gff_read()
-    return _have_gffread_program
+    return _have_ext_program("gffread")
 
 def _bed_to_gxf(request, gxf, is_gtf, typedir):
     outdir = get_test_output_dir(request)
-    subdir = "gtf_bed" if is_gtf else "gff_bed"
+    subdir = "gtf_bed" if is_gtf else "gff3_bed"
     bed = osp.join(outdir, subdir, typedir, get_test_id(request) + ".bed")
     os.makedirs(osp.dirname(bed), exist_ok=True)
     subprocess.check_call(["gffread", "--bed", gxf, "-o", bed])
@@ -172,3 +166,25 @@ def gtf_to_bed_compare(request, in_gtf, out_gtf):
     available"""
     if _have_gffread():
         _gxf_to_bed_compare(request, in_gtf, out_gtf, is_gtf=True)
+
+def gff3_to_bed_compare(request, in_gff3, out_gff3):
+    """compare GFF3 output with source by converting to bed, if gffread is
+    available"""
+    if _have_gffread():
+        _gxf_to_bed_compare(request, in_gff3, out_gff3)
+
+def _have_gff3ToGenePred():
+    return _have_ext_program("gff3ToGenePred")
+
+def gff3_ucsc_validate(request, out_gff3):
+    """validate GFF3 with UCSC browser's program"""
+    if _have_gff3ToGenePred():
+        # discard stderr if warnings
+        results = subprocess.run(["gff3ToGenePred", out_gff3, "/dev/null"], stderr=subprocess.PIPE, text=True)
+        if results.returncode != 0:
+            pytest.fail(f"gff3ToGenePred failed on `{out_gff3}':\n{results.stderr}")
+
+def get_expect_error_ids(expect_spec):
+    """error id based on input file name in a list where each expect_spec[*][0]
+    is the relative file name"""
+    return [osp.basename(r[0]) for r in expect_spec]

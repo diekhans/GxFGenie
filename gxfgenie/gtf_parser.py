@@ -4,7 +4,7 @@ GTF parser
 # Copyright 2025-2025 Mark Diekhans
 import re
 from gxfgenie.errors import GxfGenieFormatError
-from gxfgenie.gxf_record import GxfAttrs, GxfRecord, gxf_attr_add
+from gxfgenie.gxf_record import GxfAttrs, GxfRecord, gxf_attr_add, str_or_dot
 from gxfgenie.gxf_parser import GxfParser
 
 # split attributes field
@@ -23,7 +23,18 @@ class GtfAttrs(GxfAttrs):
 
 class GtfRecord(GxfRecord):
     "A GTF record"
-    pass
+
+    def __str__(self):
+        """convert to tab-separate line"""
+        return '\t'.join([self.seqname,
+                          self.source,
+                          self.feature,
+                          str(self.start),
+                          str(self.end),
+                          str_or_dot(self.score),
+                          str_or_dot(self.strand),
+                          str_or_dot(self.phase),
+                          str(self.attrs)])
 
 class GtfParser(GxfParser):
     """
@@ -63,6 +74,7 @@ def gtf_format_attrs(attrs):
     """
     Format a GtfAttrs object into a valid GTF attributes string.
     """
+    # must repeat attributes, no multi-value syntax like GFF3
     attrs_strs = []
     for attr in attrs.values():
         for ival in range(0, len(attr)):

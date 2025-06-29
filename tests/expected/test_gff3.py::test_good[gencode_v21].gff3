@@ -1,9 +1,4 @@
 ##gff-version 3
-#description: evidence-based annotation of the human genome (GRCh38), version 21 (Ensembl 77)
-#provider: GENCODE
-#contact: gencode@sanger.ac.uk
-#format: gff3
-#date: 2014-09-29
 ##sequence-region chr1 1 248956422
 chr1	HAVANA	gene	11869	14409	.	+	.	ID=ENSG00000223972.5;gene_id=ENSG00000223972.5;transcript_id=ENSG00000223972.5;gene_type=transcribed_unprocessed_pseudogene;gene_status=KNOWN;gene_name=DDX11L1;transcript_type=transcribed_unprocessed_pseudogene;transcript_status=KNOWN;transcript_name=DDX11L1;level=2;havana_gene=OTTHUMG00000000961.2
 chr1	HAVANA	transcript	11869	14409	.	+	.	ID=ENST00000456328.2;Parent=ENSG00000223972.5;gene_id=ENSG00000223972.5;transcript_id=ENST00000456328.2;gene_type=transcribed_unprocessed_pseudogene;gene_status=KNOWN;gene_name=DDX11L1;transcript_type=processed_transcript;transcript_status=KNOWN;transcript_name=DDX11L1-002;level=2;transcript_support_level=1;tag=basic;havana_gene=OTTHUMG00000000961.2;havana_transcript=OTTHUMT00000362751.1
