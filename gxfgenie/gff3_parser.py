@@ -5,7 +5,7 @@ GFF3 parser
 
 import re
 from urllib.parse import quote, unquote
-from gxfgenie.errors import GxfGenieParseError
+from gxfgenie.errors import GxfGenieParseError, GxfGenieFormatError
 from gxfgenie.gxf_record import GxfAttrs, GxfRecord, gxf_attr_add, str_or_dot
 from gxfgenie.gxf_parser import GxfParser
 
@@ -84,8 +84,7 @@ class Gff3Parser(GxfParser):
     def _parse_attr_val(self, attr_str, attrs):
         match = _split_attr_re.match(attr_str)
         if match is None:
-            raise GxfGenieParseError(self.gxf_file, self.line_number,
-                                     f"Can't parse attribute/value: `{attr_str}'")
+            raise GxfGenieFormatError(f"Can't parse attribute=value: `{attr_str}'")
         name = match.group(1)
         value = match.group(2)
         if ',' in value:

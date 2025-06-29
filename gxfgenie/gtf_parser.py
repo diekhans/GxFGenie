@@ -43,7 +43,7 @@ class GtfParser(GxfParser):
     def _parse_attr_val(self, attr_str, attrs):
         match = _split_attr_re.match(attr_str)
         if match is None:
-            raise GxfGenieFormatError(f"Can't parse attribute/value: `{attr_str}'")
+            raise GxfGenieFormatError(f"Can't parse attribute=value: `{attr_str}'")
         name = match.group(1)
         value = match.group(5) if match.group(5) is not None else match.group(4)
         gxf_attr_add(attrs, self.attrs_cached, name, value)

@@ -47,7 +47,20 @@ def test_good(setname, request):
     if setname not in _skip_gff3ToGenePred_check:
         gff3_ucsc_validate(request, out_gff3)
 
+
 error_test_set = [
+    ["gff3_bad/bogusQuotes", [
+        (GxfGenieParseError,
+         r""".*gff3_bad/bogusQuotes\.gff3:2: error parsing GxF record:.*"""),
+        (GxfGenieFormatError,
+         r"""Can't parse attribute=value: `Name='"""),]
+     ],
+    ["gff3_bad/errCases1", [
+        (GxfGenieParseError,
+         r""".*gff3_bad/errCases1\.gff3:5: error parsing GxF record:.*"""),
+        (GxfGenieFormatError,
+         r"""Can't parse attribute=value: `Acc:KIBRLG]"""),]
+     ],
 ]
 
 @pytest.mark.parametrize("setname, expect_spec",

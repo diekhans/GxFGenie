@@ -18,3 +18,4 @@ additional validation of GFF3 files that are create.
   from browser gff3ToGenePred tests
 - gff3_bad
   from browser gff3ToGenePred tests
+  some of these test relations of records, not parser
