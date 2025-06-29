@@ -28,15 +28,6 @@ gff3_good_test_sets = [
     "gff3_good/transcriptOnly",
 ]
 
-# gffread encode feature column, we don't.  Spec doesn't
-# say it is need, so we don't do gffread test on these
-_skip_gffread_check = frozenset((
-    "gff3_good/discontinuous",
-    "gff3_good/hprc",
-    "gff3_good/mm10Gencode",
-    "gff3_good_noExons"
-))
-
 _skip_gff3ToGenePred_check = frozenset((
     "gff3_good/ncbiProblems",
 ))
@@ -52,8 +43,7 @@ def test_good(setname, request):
         for rec in parser.parse():
             print(str(rec), file=fh)
     diff_results_expected(request, ".gff3")
-    if setname not in _skip_gffread_check:
-        gff3_to_bed_compare(request, in_gff3, out_gff3)
+    gff3_to_bed_compare(request, in_gff3, out_gff3)
     if setname not in _skip_gff3ToGenePred_check:
         gff3_ucsc_validate(request, out_gff3)
 
