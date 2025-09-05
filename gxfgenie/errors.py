@@ -13,9 +13,10 @@ class GxfGenieFormatError(GxfGenieError):
     pass
 
 class GxfGenieParseError(GxfGenieFormatError):
-
     """
     Indicates a parser error that is reported but allows checking to continue.
     """
     def __init__(self, gxf_file, line_number, msg):
+        if gxf_file is None:
+            gxf_file = "<unknown>"
         super().__init__(f"Error: {gxf_file}:{line_number}: {msg}")

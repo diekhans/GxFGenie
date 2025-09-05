@@ -26,7 +26,7 @@ class GxfParser(ABC):
         self.opened_file = (gxf_fh is None)
         self.fh = fileops.opengz(gxf_file) if gxf_fh is None else gxf_fh
         self.line_number = 0
-        self.attrs_cached = {}
+        self.attrs_cache = {}
 
     def _advance_line(self):
         """Advance to the next line. Sets object state and returns None or line"""
@@ -137,6 +137,7 @@ class GxfParser(ABC):
                                   self._parse_strand(row[6]),
                                   self._parse_phase(row[7]),
                                   self.parse_attrs(row[8]),
+                                  file_name=self.gxf_file,
                                   line_number=self.line_number)
 
     def _parse_line(self, line):

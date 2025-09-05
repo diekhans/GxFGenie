@@ -46,7 +46,7 @@ class GtfParser(GxfParser):
             raise GxfGenieFormatError(f"Can't parse attribute=value: `{attr_str}'")
         name = match.group(1)
         value = match.group(5) if match.group(5) is not None else match.group(4)
-        gxf_attr_add(attrs, self.attrs_cached, name, value)
+        gxf_attr_add(attrs, self.attrs_cache, name, value)
 
     def parse_attrs(self, attrs_str):
         """
@@ -58,9 +58,11 @@ class GtfParser(GxfParser):
                 self._parse_attr_val(attr_str, attrs)
         return attrs
 
-    def create_record(self, seqname, source, feature, start, end, score, strand, phase, attrs, *, line_number=None):
+    def create_record(self, seqname, source, feature, start, end, score, strand, phase, attrs, *,
+                      file_name=None, line_number=None):
         "create a GtfRecord object"
-        return GtfRecord(seqname, source, feature, start, end, score, strand, phase, attrs, line_number=line_number)
+        return GtfRecord(seqname, source, feature, start, end, score, strand, phase, attrs,
+                         file_name=file_name, line_number=line_number)
 
 
 def _format_attr(attr, value):

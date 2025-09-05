@@ -4,7 +4,7 @@ GxfRecord parsed from either GTF or GFF3 file.
 # Copyright 2025-2025 Mark Diekhans
 from abc import ABC, abstractmethod
 from collections.abc import Iterable, Hashable
-from gxfgenie.objdict import ObjDict
+from gxfgenie.errors import GxfGenieError
 
 def _is_immutable(value):
     if isinstance(value, tuple):
@@ -26,7 +26,6 @@ class GxfAttr:
     """An attribute in GxF can have one or more values. The major use case are
     single-value, thus these are stored as scalars, and special-case multiple
     valued attributes as tuple to save memory.  Instance of this class are immutable.
-
 
     Attributes:
         name (str): The name of the attribute.
@@ -79,28 +78,63 @@ class GxfAttr:
         else:
             return self.value
 
-class GxfAttrs(ObjDict, ABC):
+class GxfAttrs(dict, ABC):
     """Attributes for GTF/GFF3 records.
 
     Mutable object of attribute in a GxF, containing GxfAttr objects.
-    Each attribute maybe a scalar or tuple value.  Care should be used
-    in accessing the value to allow for this difference.
-
-    This is object where each attribute name is a field with a value of GxfAttr
-    as well as a dictionary of the values.
+    Each attribute maybe a scalar or tuple value.
     """
-    # NOTE: avoid added methods that could conflict with attribute names, try
-    # to stick with operators
-
     def __setattr__(self, name, value):
         if not isinstance(value, GxfAttr):
             raise TypeError(f"attribute `{name}' must have a value of type `GxfAttr', got `{type(value)}'")
         super().__setitem__(name, value)
 
     @abstractmethod
-    def __str(self):
+    def __str__(self):
         """convert to file format"""
         pass
+
+    def find_attr(self, name, default=None):
+        "Get an GxfAttr or default if it does not exist"
+        return self.get(name, default)
+
+    def get_attr(self, name):
+        "Get an GxfAttr or error if it does not exist"
+        attr = self.find_attr(name)
+        if name is not None:
+            raise GxfGenieError(f"attribute `{name}' not found")
+        return attr
+
+    def find_attr_value(self, name, default=None):
+        "Get an attribute or default. Returns a list or scalar"
+        attr = self.find_attr(name, None)
+        if attr is None:
+            return default
+        return attr.value
+
+    def get_attr_value(self, name):
+        "Get an attribute or error. Returns a list or scalar"
+        return self.get_attr(name).value
+
+    def _not_single_value_error(self, attr):
+        return GxfGenieError(f"requested single value attribute `{attr.name}' has {len(attr)} values")
+
+    def find_attr_value1(self, name, default=None):
+        "Get a single value attribute or default"
+        attr = self.find_attr(name)
+        if attr is None:
+            return default
+        if len(attr) > 1:
+            raise self._not_single_value_error(attr)
+        return attr.value
+
+    def get_attr_value1(self, name):
+        "Get a single value attribute or error"
+        attr = self.get_attr(name)
+        if len(attr) > 1:
+            raise self._not_single_value_error(attr)
+        return attr.value
+
 
 def _merge_attr_values(old_value, new_value):
     new_value = _normalize_value(new_value)
@@ -124,7 +158,7 @@ def gxf_attr_add(attrs, attr_cache, name, value):
     Returns:
         the GxfAttr object that was stored
     """
-    attr = attrs.get(name)
+    attr = attrs.find_attr(name)
     if attr is None:
         attr = GxfAttr(name, value)
     else:
@@ -154,11 +188,17 @@ class GxfRecord(ABC):
         strand (str): strand of feature, one of '+', '-', or None if not specfied.
         phase (int,None): phase of CDS exon, 0, 1, 2, or None
         attrs (GxfAttrs): Attributes
+        parent (GxfRecord):  Pointer to the parent object, or None if no parent.
+        children ([GxfRecord]): list of children of this record
+        file_name (str or None): Name of file the record was parsed from, if available
+        line_number (int or None): Line number of file the record was parsed from, or None if not available.
     """
     __slots__ = ("seqname", "source", "feature", "start", "end", "score",
-                 "strand", "phase", "attrs", "line_number")
+                 "strand", "phase", "attrs", "parent", "children",
+                 "file_name", "line_number")
 
-    def __init__(self, seqname, source, feature, start, end, score, strand, phase, attrs, *, line_number=None):
+    def __init__(self, seqname, source, feature, start, end, score, strand, phase, attrs, *,
+                 file_name=None, line_number=None):
         assert seqname is not None
         assert isinstance(attrs, GxfAttrs)
         self.seqname = seqname
@@ -170,12 +210,16 @@ class GxfRecord(ABC):
         self.strand = strand
         self.phase = phase
         self.attrs = attrs
+        self.parent = None
+        self.children = []
+        self.file_name = file_name
         self.line_number = line_number
 
     @abstractmethod
     def __str__(self):
         """convert to tab-separate line"""
         pass
+
 
 class GxfMeta:
     """

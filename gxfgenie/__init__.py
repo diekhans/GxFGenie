@@ -3,7 +3,6 @@ from gxfgenie.gtf_parser import GtfParser
 from gxfgenie.gff3_parser import Gff3Parser
 from gxfgenie.errors import GxfGenieError
 
-
 def _get_filetype_ext(gxf_file):
     """
     Get the primary file extension for the given GXF file, accounting for possible compression.

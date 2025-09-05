@@ -11,8 +11,8 @@ tests = .
 # stdout not echo with mulitple processes
 nproc = 20
 
-# debug=--debug
-debug = 
+debug=--debug
+# debug = 
 
 # override with pytest_extra=-v or what ever
 pytest_extra = 
@@ -24,7 +24,7 @@ traceback = --tb=short
 # export PYTHONTRACEMALLOC = 20
 
 test:
-	${PYTEST} ${traceback} --numprocesses=${nproc} ${pytest_extra} ${tests}
+	${PYTEST} ${traceback} --numprocesses=${nproc} --color=no ${pytest_extra} ${tests}
 
 mkdirs:
 	@mkdir -p output

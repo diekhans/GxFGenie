@@ -91,7 +91,7 @@ class Gff3Parser(GxfParser):
             value = self._split_multi_val_attr(value)
         else:
             value = unquote(value)
-        gxf_attr_add(attrs, self.attrs_cached, name, value)
+        gxf_attr_add(attrs, self.attrs_cache, name, value)
 
     def parse_attrs(self, attrs_str):
         """
@@ -103,10 +103,13 @@ class Gff3Parser(GxfParser):
                 self._parse_attr_val(attr_str, attrs)
         return attrs
 
-    def create_record(self, seqname, source, feature, start, end, score, strand, phase, attrs, *, line_number=None):
+    def create_record(self, seqname, source, feature, start, end, score, strand, phase, attrs, *,
+                      file_name=None, line_number=None):
         "create a Gff3Record object"
         return Gff3Record(unquote(seqname), unquote(source), unquote(feature),
-                          start, end, score, strand, phase, attrs, line_number=line_number)
+                          start, end, score, strand, phase, attrs,
+                          file_name=file_name, line_number=line_number)
+
 
 def _format_attr(attr):
     name = _quote_col9(attr.name)
@@ -118,7 +121,7 @@ def _format_attr(attr):
 
 def gff3_format_attrs(attrs):
     """
-    Format a GtfAttrs object into a valid GTF attributes string.
+    Format a GtfAttrs object into a valid GFF3 attributes string.
     """
     attrs_strs = []
     for attr in attrs.values():

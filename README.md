@@ -1,15 +1,17 @@
 # GxFGenie
 Reading and writing of GTF or GFF3 genome annotation files.
 
-THIS PACKAGE IS UNDER DEVELOPMENT.  GFF3 parsing is not functional
+THIS PACKAGE IS UNDER DEVELOPMENT.
 
-This provides a library parsing GTF and GFF3 genomic annotation files into
-Python objects.  While it intends to a robust parser, with the ability to
-selectively ignore errors, it should not be considered a validation
+This provides a pure Python library parsing GTF and GFF3 genomic annotation
+files into Python objects.  While it intends to a robust parser, with the
+ability to selectively ignore errors, it should not be considered a validation
 tool for either GTF or GFF3.
 
-While there are multiple parser packages, many of them are of part of a larger
-project or parse into other heavier weight structures such as Pandas data
-frames or databases.
+While there are multiple parser for GTF and GFF3 packages, many of them are of
+part of a larger project or parse into other heavier weight structures such as
+Pandas data frames or databases.  The goal is to provide a library for reading
+and writing GxF files to or from Python objects.
 
-
+The motivation of this package is to easy the use of ubiquitous but problematic
+format.
