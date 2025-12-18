@@ -2,7 +2,7 @@
 #   root=../..
 #   include ${root}/defs.mk
 
-PYTHON = poetry run python3
+PYTHON = python3
 FLAKE8 = ${PYTHON} -m flake8
 PYTEST = ${PYTHON} -m pytest
 
