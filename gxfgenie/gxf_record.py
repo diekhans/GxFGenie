@@ -192,6 +192,7 @@ class GxfRecord(ABC):
         children ([GxfRecord]): list of children of this record
         file_name (str or None): Name of file the record was parsed from, if available
         line_number (int or None): Line number of file the record was parsed from, or None if not available.
+        start0 (int): zero-based start.
     """
     __slots__ = ("seqname", "source", "feature", "start", "end", "score",
                  "strand", "phase", "attrs", "parent", "children",
@@ -214,6 +215,10 @@ class GxfRecord(ABC):
         self.children = []
         self.file_name = file_name
         self.line_number = line_number
+
+    @property
+    def start0(self):
+        return self.start - 1
 
     @abstractmethod
     def __str__(self):

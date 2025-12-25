@@ -33,10 +33,13 @@ class GxfDataSet:
         self._transcripts_by_range = None
         self._genes_by_range = None
 
+    def _build_genes_range_index(self):
+        assert False
+
     def add_record(self, rec):
         self._records.append(rec)
 
-    def get_transcripts(self):
+    def iter_transcripts(self):
         """
         Get an generator over all transcript records.
         """
@@ -59,7 +62,7 @@ class GxfDataSet:
 
     def get_overlapping_transcripts(self, chrom, start, end, strand=None):
         """
-        Get transcript records overlapping a range, optionally filtering by strand
+        Get a list of transcript records overlapping a range, optionally filtering by strand
         """
         if self._transcript_loci_by_range is None:
             self._build_transcript_loci_by_range()
@@ -68,7 +71,7 @@ class GxfDataSet:
     def _build_transcripts_range_index(self):
         assert False
 
-    def get_genes(self):
+    def iter_genes(self):
         """
         Get an generator over all gene records.
         """
@@ -97,5 +100,9 @@ class GxfDataSet:
             self._build_gene_loci_by_range()
         return self._gene_loci_by_range.overlapping(chrom, start, end, strand)
 
-    def _build_genes_range_index(self):
-        assert False
+    def iter_roots(self):
+        """Get generator over all of the roots of the annotation tree.  This differs
+        from getting genes, as it includes non-gene related annotations.
+        """
+        for root in self.roots:
+            yield root
